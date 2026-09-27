@@ -1,1 +1,108 @@
+blueprint:
+  name: MN Vikings Game Tracker with Auto-Stop at POST
+  description: Cycles a light between Vikings Purple and Gold when a game kicks off. Automatically turns off the light and resets helper toggles when the game finishes (POST).
+  domain: automation
+  input:
+    target_light:
+      name: Light
+      description: Select the Philips Hue light or group to cycle.
+      selector:
+        entity:
+          domain: light
+    team_tracker_sensor:
+      name: Team Tracker Sensor
+      description: Select your HACS Team Tracker sensor for the Minnesota Vikings (e.g., sensor.team_tracker_min_vikings).
+      selector:
+        entity:
+          domain: sensor
+    pause_toggle:
+      name: Play/Pause Toggle Helper (Optional)
+      description: An optional input_boolean toggle. The loop runs only when this helper is turned ON. Turn it OFF to pause the cycle without killing the bulb power.
+      default:
+      selector:
+        entity:
+          domain: input_boolean
+    transition_time:
+      name: Transition Time
+      description: Time (in seconds) taken to morph into the next color.
+      default: 4
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: seconds
 
+mode: restart
+
+trigger:
+  # Kickoff or manual starts
+  - platform: state
+    entity_id: !input team_tracker_sensor
+    to: "IN"
+    id: game_start
+  - platform: state
+    entity_id: !input target_light
+    to: "on"
+    id: game_start
+  - platform: state
+    entity_id: !input pause_toggle
+    to: "on"
+    id: game_start
+  # Game Finishes
+  - platform: state
+    entity_id: !input team_tracker_sensor
+    to: "POST"
+    id: game_end
+
+action:
+  - choose:
+      # --- GAME END ACTION ---
+      - conditions:
+          - condition: trigger
+            id: game_end
+        sequence:
+          - action: light.turn_off
+            target:
+              entity_id: !input target_light
+          - if:
+              - condition: template
+                value_template: "{{ json_name('pause_toggle') != none }}"
+            then:
+              - action: input_boolean.turn_off
+                target:
+                  entity_id: !input pause_toggle
+
+      # --- GAME START / COLOR CYCLE ACTION ---
+      - conditions:
+          - condition: trigger
+            id: game_start
+        sequence:
+          - repeat:
+              while:
+                - condition: state
+                  entity_id: !input target_light
+                  state: "on"
+                - condition: state
+                  entity_id: !input team_tracker_sensor
+                  state: "IN"
+                - condition: template
+                  value_template: >-
+                    {% set helper = json_name('pause_toggle') %}
+                    {{ helper == none or is_state(helper, 'on') }}
+              sequence:
+                - action: light.turn_on
+                  target:
+                    entity_id: !input target_light
+                  data:
+                    rgb_color: [88, 44, 131]  # MN Vikings Purple
+                    transition: !input transition_time
+                - delay:
+                    seconds: !input transition_time
+                - action: light.turn_on
+                  target:
+                    entity_id: !input target_light
+                  data:
+                    rgb_color: [255, 199, 44]  # MN Vikings Gold
+                    transition: !input transition_time
+                - delay:
+                    seconds: !input transition_time
