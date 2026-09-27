@@ -1,6 +1,6 @@
 blueprint:
-  name: MN Vikings Game Tracker with Auto-Stop at POST
-  description: Cycles a light between Vikings Purple and Gold when a game kicks off. Automatically turns off the light and resets helper toggles when the game finishes (POST).
+  name: MN Vikings Game Tracker with Auto-Stop & Manual Test
+  description: Cycles a light between Vikings Purple and Gold when a game kicks off or when manually forced using a testing helper toggle. Automatically turns off when the game finishes (POST).
   domain: automation
   input:
     target_light:
@@ -16,8 +16,8 @@ blueprint:
         entity:
           domain: sensor
     pause_toggle:
-      name: Play/Pause Toggle Helper (Optional)
-      description: An optional input_boolean toggle. The loop runs only when this helper is turned ON. Turn it OFF to pause the cycle without killing the bulb power.
+      name: Play/Pause / Testing Toggle Helper (Optional)
+      description: An optional input_boolean toggle. Turning this ON forces the loop to run for testing or overrides, regardless of active live game status.
       default:
       selector:
         entity:
@@ -82,13 +82,15 @@ action:
                 - condition: state
                   entity_id: !input target_light
                   state: "on"
-                - condition: state
-                  entity_id: !input team_tracker_sensor
-                  state: "IN"
                 - condition: template
                   value_template: >-
                     {% set helper = json_name('pause_toggle') %}
-                    {{ helper == none or is_state(helper, 'on') }}
+                    {% set tracker = json_name('team_tracker_sensor') %}
+                    {% if helper != none and is_state(helper, 'on') %}
+                      true
+                    {% else %}
+                      {{ is_state(tracker, 'IN') }}
+                    {% endif %}
               sequence:
                 - action: light.turn_on
                   target:
