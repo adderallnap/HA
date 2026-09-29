@@ -1,5 +1,5 @@
 blueprint:
-  name: Light Toggle (Vikings Purple & Gold Pulse / White)
+  name: Light Toggle (Vikings Purple & Gold Pulse / White) Fixed
   description: Cycles a light smoothly between Minnesota Vikings Purple and Gold when a helper toggle is turned on, and returns it to crisp White when turned off.
   domain: automation
   input:
@@ -46,9 +46,10 @@ action:
         sequence:
           - repeat:
               while:
-                - condition: state
-                  entity_id: !input control_toggle
-                  state: "on"
+                - condition: template
+                  value_template: >-
+                    {% set toggle = json_name('control_toggle') %}
+                    {{ is_state(toggle, 'on') }}
               sequence:
                 - action: light.turn_on
                   target:
