@@ -1,6 +1,6 @@
 blueprint:
-  name: Simple Light Toggle (Purple / White)
-  description: Turns a light Minnesota Vikings Purple when a helper toggle is turned on, and changes it back to White when the toggle is turned off.
+  name: Simple Light Toggle (Purple / White) Fixed
+  description: Turns a light Minnesota Vikings Purple when a helper toggle is turned on, and forces it back to crisp White when the toggle is turned off.
   domain: automation
   input:
     target_light:
@@ -48,10 +48,10 @@ action:
             target:
               entity_id: !input target_light
             data:
-              rgb_color: [88, 44, 131]  # Official MN Vikings Purple
+              rgb_color:  # Official MN Vikings Purple
               transition: !input transition_time
 
-      # --- Helper turned OFF: Switch to White ---
+      # --- Helper turned OFF: Switch back to crisp White ---
       - conditions:
           - condition: trigger
             id: turn_white
@@ -60,6 +60,6 @@ action:
             target:
               entity_id: !input target_light
             data:
-              color_temp: 370 # Balanced warm-white (approx 2700K)
+              rgb_color:  # Pure White array override
               transition: !input transition_time
               
