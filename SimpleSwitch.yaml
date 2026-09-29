@@ -1,0 +1,65 @@
+blueprint:
+  name: Simple Light Toggle (Purple / White)
+  description: Turns a light Minnesota Vikings Purple when a helper toggle is turned on, and changes it back to White when the toggle is turned off.
+  domain: automation
+  input:
+    target_light:
+      name: Light
+      description: Select the Philips Hue light or group to control.
+      selector:
+        entity:
+          domain: light
+    control_toggle:
+      name: Control Toggle Helper
+      description: Select the input_boolean helper switch that triggers the color change.
+      selector:
+        entity:
+          domain: input_boolean
+    transition_time:
+      name: Transition Time
+      description: Seconds taken to fade between colors.
+      default: 2
+      selector:
+        number:
+          min: 0
+          max: 10
+          unit_of_measurement: seconds
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input control_toggle
+    to: "on"
+    id: turn_purple
+  - platform: state
+    entity_id: !input control_toggle
+    to: "off"
+    id: turn_white
+
+action:
+  - choose:
+      # --- Helper turned ON: Switch to Vikings Purple ---
+      - conditions:
+          - condition: trigger
+            id: turn_purple
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              rgb_color: [88, 44, 131]  # Official MN Vikings Purple
+              transition: !input transition_time
+
+      # --- Helper turned OFF: Switch to White ---
+      - conditions:
+          - condition: trigger
+            id: turn_white
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              color_temp: 370 # Balanced warm-white (approx 2700K)
+              transition: !input transition_time
+              
