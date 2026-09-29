@@ -48,7 +48,7 @@ action:
             target:
               entity_id: !input target_light
             data:
-              rgb_color:  # Official MN Vikings Purple
+              rgb_color: [88, 44, 131]  # Official MN Vikings Purple
               transition: !input transition_time
 
       # --- Helper turned OFF: Switch back to crisp White ---
@@ -60,6 +60,6 @@ action:
             target:
               entity_id: !input target_light
             data:
-              rgb_color:  # Pure White array override
+              rgb_color: [255, 255, 255]  # Pure White array override
               transition: !input transition_time
               
